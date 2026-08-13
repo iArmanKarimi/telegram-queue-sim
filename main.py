@@ -23,6 +23,13 @@ class Message:
     created_at: float
     sent_at: float | None = None
 
+    @property
+    def wait_time(self) -> float | None:
+        if self.sent_at is None:
+            return None
+
+        return self.sent_at - self.created_at
+
 
 class Bot:
     def __init__(self):
@@ -36,6 +43,7 @@ class MessageSimulator:
     def __init__(self):
         self.bot = Bot()
         self.limits_hit = 0
+        self.messages: list[Message] = []
 
     def run(self, message_count: int) -> None:
         with Progress() as progress, Live(refresh_per_second=10) as live:
@@ -51,6 +59,8 @@ class MessageSimulator:
                     message=message,
                     live=live,
                 )
+
+                self.messages.append(message)
 
                 progress.advance(progress_task)
                 self._simulate_arrival_interval()
@@ -87,7 +97,12 @@ class MessageSimulator:
 
     @staticmethod
     def _simulate_arrival_interval() -> None:
-        time.sleep(random.uniform(MIN_SEND_INTERVAL, MAX_SEND_INTERVAL))
+        time.sleep(
+            random.uniform(
+                MIN_SEND_INTERVAL,
+                MAX_SEND_INTERVAL,
+            )
+        )
 
 
 def main() -> None:
