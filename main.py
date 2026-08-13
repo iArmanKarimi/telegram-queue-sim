@@ -42,8 +42,8 @@ class Bot:
 class MessageSimulator:
     def __init__(self):
         self.bot = Bot()
-        self.limits_hit = 0
         self.messages: list[Message] = []
+        self.limits_hit = 0
 
     def run(self, message_count: int) -> None:
         with Progress() as progress, Live(refresh_per_second=10) as live:
@@ -64,6 +64,8 @@ class MessageSimulator:
 
                 progress.advance(progress_task)
                 self._simulate_arrival_interval()
+
+        self._print_summary()
 
     def _create_message(self, message_index: int) -> Message:
         return Message(
@@ -94,6 +96,27 @@ class MessageSimulator:
                 )
 
                 time.sleep(error.seconds)
+
+    def _print_summary(self) -> None:
+        wait_times = [
+            message.wait_time
+            for message in self.messages
+            if message.wait_time is not None
+        ]
+
+        total_wait_time = sum(wait_times)
+        average_wait_time = total_wait_time / len(wait_times)
+
+        print(
+            Panel(
+                f"[bold cyan]Simulation Complete[/bold cyan]\n\n"
+                f"Messages sent: {len(self.messages)}\n"
+                f"Limits hit: {self.limits_hit}\n"
+                f"Total wait time: {total_wait_time:.2f}s\n"
+                f"Average wait time: {average_wait_time:.2f}s",
+                border_style="green",
+            )
+        )
 
     @staticmethod
     def _simulate_arrival_interval() -> None:
