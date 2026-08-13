@@ -1,5 +1,6 @@
 import random
 import time
+from dataclasses import dataclass
 
 from rich import print
 from rich.live import Live
@@ -13,6 +14,14 @@ MESSAGE_COUNT = 100
 CHAT_COUNT = 10
 MIN_SEND_INTERVAL = 0.01
 MAX_SEND_INTERVAL = 0.05
+
+
+@dataclass
+class Message:
+    index: int
+    chat_id: int
+    created_at: float
+    sent_at: float | None = None
 
 
 class Bot:
@@ -36,26 +45,32 @@ class MessageSimulator:
             )
 
             for message_index in range(message_count):
-                chat_id = random.randint(1, CHAT_COUNT)
+                message = self._create_message(message_index)
 
                 self._send_message(
-                    chat_id=chat_id,
-                    message_index=message_index,
+                    message=message,
                     live=live,
                 )
 
                 progress.advance(progress_task)
                 self._simulate_arrival_interval()
 
+    def _create_message(self, message_index: int) -> Message:
+        return Message(
+            index=message_index,
+            chat_id=random.randint(1, CHAT_COUNT),
+            created_at=time.monotonic(),
+        )
+
     def _send_message(
         self,
-        chat_id: int,
-        message_index: int,
+        message: Message,
         live: Live,
     ) -> None:
         while True:
             try:
-                self.bot.send_message(chat_id)
+                self.bot.send_message(message.chat_id)
+                message.sent_at = time.monotonic()
                 return
 
             except FloodWaitError as error:
@@ -63,7 +78,7 @@ class MessageSimulator:
 
                 live.update(
                     Panel(
-                        f"[blue]Hit limit at message {message_index}[/blue]\n"
+                        f"[blue]Hit limit at message {message.index}[/blue]\n"
                         f"[bold purple]Total limits hit: {self.limits_hit}[/bold purple]"
                     )
                 )
@@ -86,7 +101,6 @@ def main() -> None:
     )
 
     simulator = MessageSimulator()
-
     simulator.run(MESSAGE_COUNT)
 
 
