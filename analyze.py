@@ -68,8 +68,8 @@ def plot_average_wait_by_chat(messages: list[Message]) -> None:
 
     chat_ids = sorted(chat_waits)
     average_waits = [
-        sum(wait_times) / len(wait_times)
-        for wait_times in (chat_waits[chat_id] for chat_id in chat_ids)
+        sum(chat_waits[chat_id]) / len(chat_waits[chat_id])
+        for chat_id in chat_ids
     ]
 
     _prepare_chart(
@@ -134,8 +134,7 @@ def plot_wait_time_distribution(messages: list[Message]) -> None:
 
 
 def analyze(messages: list[Message]) -> None:
-    plot_wait_time_distribution(messages)
-    plot_wait_time_by_chat(messages)
-    plot_average_wait_by_chat(messages)
+    plot_wait_times(messages)
+    plot_wait_times_by_chat(messages)
     plot_message_timeline(messages)
     plot_wait_time_distribution(messages)
