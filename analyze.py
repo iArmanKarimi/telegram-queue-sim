@@ -83,7 +83,32 @@ def plot_average_wait_by_chat(messages: list[Message]) -> None:
     plt.show()
 
 
+def plot_message_timeline(messages: list[Message]) -> None:
+    start_time = min(message.created_at for message in messages)
+
+    plt.clear_figure()
+    plt.theme("pro")
+    plt.plotsize(100, 30)
+
+    plt.title("Message Timeline")
+    plt.xlabel("Time (seconds)")
+    plt.ylabel("Message")
+
+    for message in messages:
+        arrival_time = message.created_at - start_time
+        sent_time = message.sent_at - start_time
+
+        plt.plot(
+            [arrival_time, sent_time],
+            [message.index, message.index],
+            marker="dot",
+        )
+
+    plt.show()
+
+
 def analyze(messages: list[Message]) -> None:
     plot_wait_times(messages)
     plot_wait_times_by_chat(messages)
-    plot_average_wait_by_chat(messages)
+    # plot_average_wait_by_chat(messages)
+    plot_message_timeline(messages)
