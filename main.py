@@ -3,10 +3,11 @@ from rich.panel import Panel
 
 from bot import Bot
 from render import Renderer
+from analyze import analyze
 from simulator import MessageSimulator
 
 
-MESSAGE_COUNT = 50
+MESSAGE_COUNT = 100
 
 
 def main() -> None:
@@ -41,6 +42,8 @@ def main() -> None:
         messages=messages,
         limits_hit=bot.limits_hit,
     )
+
+    analyze(messages)
 
 
 if __name__ == "__main__":
