@@ -1,4 +1,3 @@
-import random
 import time
 
 MESSAGE_SEND_LIMIT = 30
@@ -18,25 +17,27 @@ class TelegramAPI:
         self.messages: list[int] = []
         self.last_reset = time.monotonic()
 
-    def _reset_window(self):
+    def _reset_window(self) -> None:
         now = time.monotonic()
-        
+
         if now - self.last_reset >= 1:
             self.last_reset = now
             self.messages.clear()
 
-    def _check_send_limit(self):
+    def _check_send_limit(self) -> None:
         if len(self.messages) >= MESSAGE_SEND_LIMIT:
             raise FloodWaitError(seconds=1)
 
-    def _check_send_limit_per_chat(self, chat_id):
+    def _check_send_limit_per_chat(self, chat_id: int) -> None:
         if self.messages.count(chat_id) >= MESSAGE_SEND_LIMIT_PER_CHAT:
             raise FloodWaitError(seconds=1)
 
     def process_message(self, chat_id: int) -> None:
         """
-        Simulates sending a message to a chat. 
-        Raises FloodWaitError if the message cannot be sent due to rate limits.
+        Simulates sending a message to a chat.
+
+        Raises FloodWaitError if the message cannot be sent
+        because of a rate limit.
         """
         self._reset_window()
         self._check_send_limit()

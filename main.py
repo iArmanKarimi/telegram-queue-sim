@@ -1,131 +1,12 @@
-import random
-import time
-from dataclasses import dataclass
-
 from rich import print
-from rich.live import Live
 from rich.panel import Panel
-from rich.progress import Progress
 
-from api import FloodWaitError, TelegramAPI
-
-
-MESSAGE_COUNT = 100
-CHAT_COUNT = 10
-MIN_SEND_INTERVAL = 0.01
-MAX_SEND_INTERVAL = 0.05
+from bot import Bot
+from render import Renderer
+from simulator import MessageSimulator
 
 
-@dataclass
-class Message:
-    index: int
-    chat_id: int
-    created_at: float
-    sent_at: float | None = None
-
-    @property
-    def wait_time(self) -> float | None:
-        if self.sent_at is None:
-            return None
-
-        return self.sent_at - self.created_at
-
-
-class Bot:
-    def __init__(self):
-        self.api = TelegramAPI()
-
-    def send_message(self, chat_id: int) -> None:
-        self.api.process_message(chat_id)
-
-
-class MessageSimulator:
-    def __init__(self):
-        self.bot = Bot()
-        self.messages: list[Message] = []
-        self.limits_hit = 0
-
-    def run(self, message_count: int) -> None:
-        with Progress() as progress, Live(refresh_per_second=10) as live:
-            progress_task = progress.add_task(
-                "[cyan]Sending messages...",
-                total=message_count,
-            )
-
-            for message_index in range(message_count):
-                message = self._create_message(message_index)
-
-                self._send_message(
-                    message=message,
-                    live=live,
-                )
-
-                self.messages.append(message)
-
-                progress.advance(progress_task)
-                self._simulate_arrival_interval()
-
-        self._print_summary()
-
-    def _create_message(self, message_index: int) -> Message:
-        return Message(
-            index=message_index,
-            chat_id=random.randint(1, CHAT_COUNT),
-            created_at=time.monotonic(),
-        )
-
-    def _send_message(
-        self,
-        message: Message,
-        live: Live,
-    ) -> None:
-        while True:
-            try:
-                self.bot.send_message(message.chat_id)
-                message.sent_at = time.monotonic()
-                return
-
-            except FloodWaitError as error:
-                self.limits_hit += 1
-
-                live.update(
-                    Panel(
-                        f"[blue]Hit limit at message {message.index}[/blue]\n"
-                        f"[bold purple]Total limits hit: {self.limits_hit}[/bold purple]"
-                    )
-                )
-
-                time.sleep(error.seconds)
-
-    def _print_summary(self) -> None:
-        wait_times = [
-            message.wait_time
-            for message in self.messages
-            if message.wait_time is not None
-        ]
-
-        total_wait_time = sum(wait_times)
-        average_wait_time = total_wait_time / len(wait_times)
-
-        print(
-            Panel(
-                f"[bold cyan]Simulation Complete[/bold cyan]\n\n"
-                f"Messages sent: {len(self.messages)}\n"
-                f"Limits hit: {self.limits_hit}\n"
-                f"Total wait time: {total_wait_time:.2f}s\n"
-                f"Average wait time: {average_wait_time:.2f}s",
-                border_style="green",
-            )
-        )
-
-    @staticmethod
-    def _simulate_arrival_interval() -> None:
-        time.sleep(
-            random.uniform(
-                MIN_SEND_INTERVAL,
-                MAX_SEND_INTERVAL,
-            )
-        )
+MESSAGE_COUNT = 50
 
 
 def main() -> None:
@@ -138,8 +19,28 @@ def main() -> None:
         )
     )
 
-    simulator = MessageSimulator()
-    simulator.run(MESSAGE_COUNT)
+    renderer = Renderer(MESSAGE_COUNT)
+
+    bot = Bot(
+        on_rate_limit=renderer.render_rate_limit,
+    )
+
+    simulator = MessageSimulator(
+        bot=bot,
+        on_message_sent=renderer.advance,
+    )
+
+    renderer.start()
+
+    try:
+        messages = simulator.run(MESSAGE_COUNT)
+    finally:
+        renderer.stop()
+
+    renderer.render_summary(
+        messages=messages,
+        limits_hit=bot.limits_hit,
+    )
 
 
 if __name__ == "__main__":
