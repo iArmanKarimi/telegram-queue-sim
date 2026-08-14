@@ -7,51 +7,53 @@ CHART_WIDTH = 100
 CHART_HEIGHT = 25
 
 
-def plot_wait_times(messages: list[Message]) -> None:
-    message_indices = []
-    wait_times = []
-
-    for message in messages:
-        if message.wait_time is None:
-            continue
-
-        message_indices.append(message.index)
-        wait_times.append(message.wait_time)
-
+def _prepare_chart(title: str, x_label: str, y_label: str) -> None:
     plt.clear_figure()
     plt.theme("pro")
     plt.plotsize(CHART_WIDTH, CHART_HEIGHT)
 
-    plt.title("Message Wait Time")
-    plt.xlabel("Message")
-    plt.ylabel("Seconds")
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+
+
+def plot_wait_times(messages: list[Message]) -> None:
+    sent_messages = [
+        message
+        for message in messages
+        if message.wait_time is not None
+    ]
+
+    message_indices = [message.index for message in sent_messages]
+    wait_times = [message.wait_time for message in sent_messages]
+
+    _prepare_chart(
+        title="Message Wait Time",
+        x_label="Message",
+        y_label="Seconds",
+    )
 
     plt.scatter(message_indices, wait_times)
-
     plt.show()
 
 
 def plot_wait_times_by_chat(messages: list[Message]) -> None:
-    chat_ids = []
-    wait_times = []
+    sent_messages = [
+        message
+        for message in messages
+        if message.wait_time is not None
+    ]
 
-    for message in messages:
-        if message.wait_time is None:
-            continue
+    chat_ids = [message.chat_id for message in sent_messages]
+    wait_times = [message.wait_time for message in sent_messages]
 
-        chat_ids.append(message.chat_id)
-        wait_times.append(message.wait_time)
-
-    plt.clear_figure()
-    plt.theme("pro")
-    plt.plotsize(CHART_WIDTH, CHART_HEIGHT)
-
-    plt.title("Message Wait Time by Chat")
-    plt.xlabel("Chat")
-    plt.ylabel("Seconds")
+    _prepare_chart(
+        title="Message Wait Time by Chat",
+        x_label="Chat",
+        y_label="Seconds",
+    )
 
     plt.scatter(chat_ids, wait_times)
-
     plt.show()
 
 
@@ -66,35 +68,42 @@ def plot_average_wait_by_chat(messages: list[Message]) -> None:
 
     chat_ids = sorted(chat_waits)
     average_waits = [
-        sum(chat_waits[chat_id]) / len(chat_waits[chat_id])
-        for chat_id in chat_ids
+        sum(wait_times) / len(wait_times)
+        for wait_times in (chat_waits[chat_id] for chat_id in chat_ids)
     ]
 
-    plt.clear_figure()
-    plt.theme("pro")
-    plt.plotsize(CHART_WIDTH, CHART_HEIGHT)
-
-    plt.title("Average Wait Time by Chat")
-    plt.xlabel("Chat")
-    plt.ylabel("Seconds")
+    _prepare_chart(
+        title="Average Wait Time by Chat",
+        x_label="Chat",
+        y_label="Seconds",
+    )
 
     plt.bar(chat_ids, average_waits)
-
     plt.show()
 
 
 def plot_message_timeline(messages: list[Message]) -> None:
-    start_time = min(message.created_at for message in messages)
+    sent_messages = [
+        message
+        for message in messages
+        if message.sent_at is not None
+    ]
 
-    plt.clear_figure()
-    plt.theme("pro")
-    plt.plotsize(100, 30)
+    if not sent_messages:
+        return
 
-    plt.title("Message Timeline")
-    plt.xlabel("Time (seconds)")
-    plt.ylabel("Message")
+    start_time = min(
+        message.created_at
+        for message in sent_messages
+    )
 
-    for message in messages:
+    _prepare_chart(
+        title="Message Timeline",
+        x_label="Time (seconds)",
+        y_label="Message",
+    )
+
+    for message in sent_messages:
         arrival_time = message.created_at - start_time
         sent_time = message.sent_at - start_time
 
@@ -107,8 +116,26 @@ def plot_message_timeline(messages: list[Message]) -> None:
     plt.show()
 
 
+def plot_wait_time_distribution(messages: list[Message]) -> None:
+    wait_times = [
+        message.wait_time
+        for message in messages
+        if message.wait_time is not None
+    ]
+
+    _prepare_chart(
+        title="Wait Time Distribution",
+        x_label="Wait (seconds)",
+        y_label="Messages",
+    )
+
+    plt.hist(wait_times)
+    plt.show()
+
+
 def analyze(messages: list[Message]) -> None:
-    plot_wait_times(messages)
-    plot_wait_times_by_chat(messages)
-    # plot_average_wait_by_chat(messages)
+    plot_wait_time_distribution(messages)
+    plot_wait_time_by_chat(messages)
+    plot_average_wait_by_chat(messages)
     plot_message_timeline(messages)
+    plot_wait_time_distribution(messages)
