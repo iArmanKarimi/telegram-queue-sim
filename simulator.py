@@ -8,7 +8,7 @@ from models import Message
 
 CHAT_COUNT = 10
 MIN_SEND_INTERVAL = 0.01
-MAX_SEND_INTERVAL = 0.02
+MAX_SEND_INTERVAL = 0.05
 
 
 class MessageSimulator:
@@ -20,8 +20,11 @@ class MessageSimulator:
         self.bot = bot
         self.on_message_sent = on_message_sent
         self.messages: list[Message] = []
+        self.duration = 0.0
 
     def run(self, message_count: int) -> list[Message]:
+        started_at = time.monotonic()
+
         for message_index in range(message_count):
             message = self._create_message(message_index)
 
@@ -34,6 +37,8 @@ class MessageSimulator:
                 self.on_message_sent()
 
             self._simulate_arrival_interval()
+
+        self.duration = time.monotonic() - started_at
 
         return self.messages
 
