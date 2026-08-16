@@ -5,10 +5,9 @@ from collections.abc import Callable
 from bot import Bot
 from models import Message
 
-
 CHAT_COUNT = 10
 MIN_SEND_INTERVAL = 0.01
-MAX_SEND_INTERVAL = 0.05
+MAX_SEND_INTERVAL = 0.03
 
 
 class MessageSimulator:
