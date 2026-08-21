@@ -65,7 +65,11 @@ class Renderer:
         ]
 
         total_wait_time = sum(wait_times)
-        average_wait_time = total_wait_time / len(wait_times)
+        average_wait_time = (
+            total_wait_time / len(wait_times)
+            if wait_times
+            else 0.0
+        )
 
         print(
             Panel(

@@ -159,8 +159,15 @@ def print_summary(messages: list[Message]) -> None:
     )
 
 
-def analyze(messages: list[Message]) -> None:
+def analyze(
+    messages: list[Message],
+    show_plots: bool = True,
+) -> None:
     print_summary(messages)
+
+    if not show_plots:
+        return
+
     plot_wait_times(messages)
     plot_average_wait_by_chat(messages)
     plot_message_timeline(messages)
