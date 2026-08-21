@@ -1,6 +1,5 @@
 import random
 import time
-from collections.abc import Callable
 
 from bot import Bot
 from models import Message
@@ -12,34 +11,25 @@ MAX_SEND_INTERVAL = 0.03
 
 
 class MessageSimulator:
-    def __init__(
-        self,
-        bot: Bot,
-        on_message_sent: Callable[[], None] | None = None,
-    ):
+    def __init__(self, bot: Bot):
         self.bot = bot
-        self.on_message_sent = on_message_sent
         self.messages: list[Message] = []
         self.duration = 0.0
 
     def run(self, message_count: int) -> list[Message]:
         started_at = time.monotonic()
 
+        self.bot.start()
+
         for message_index in range(message_count):
             message = self._create_message(message_index)
 
-            self.bot.enqueue(message)
-            self.bot.process_queue()
-
             self.messages.append(message)
-
-            if (
-                message.sent_at is not None
-                and self.on_message_sent is not None
-            ):
-                self.on_message_sent()
+            self.bot.enqueue(message)
 
             self._simulate_arrival_interval()
+
+        self.bot.stop()
 
         self.duration = time.monotonic() - started_at
 

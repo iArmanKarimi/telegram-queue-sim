@@ -23,13 +23,11 @@ def main() -> None:
     renderer = Renderer(MESSAGE_COUNT)
 
     bot = Bot(
+        on_message_sent=renderer.advance,
         on_rate_limit=renderer.render_rate_limit,
     )
 
-    simulator = MessageSimulator(
-        bot=bot,
-        on_message_sent=renderer.advance,
-    )
+    simulator = MessageSimulator(bot)
 
     renderer.start()
 

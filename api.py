@@ -8,9 +8,13 @@ MESSAGE_SEND_LIMIT_PER_CHAT = 1
 class FloodWaitError(Exception):
     code = 420
 
-    def __init__(self, seconds: int):
+    def __init__(self, seconds: int, scope: str):
         self.seconds = seconds
-        super().__init__(f"FLOOD_WAIT_{seconds}")
+        self.scope = scope
+
+        super().__init__(
+            f"FLOOD_WAIT_{seconds} ({scope})"
+        )
 
 
 class TelegramAPI:
@@ -27,11 +31,17 @@ class TelegramAPI:
 
     def _check_send_limit(self) -> None:
         if len(self.messages) >= MESSAGE_SEND_LIMIT:
-            raise FloodWaitError(seconds=1)
+            raise FloodWaitError(
+                seconds=1,
+                scope="global",
+            )
 
     def _check_send_limit_per_chat(self, chat_id: int) -> None:
         if self.messages.count(chat_id) >= MESSAGE_SEND_LIMIT_PER_CHAT:
-            raise FloodWaitError(seconds=1)
+            raise FloodWaitError(
+                seconds=1,
+                scope="chat",
+            )
 
     def process_message(self, chat_id: int) -> None:
         """
