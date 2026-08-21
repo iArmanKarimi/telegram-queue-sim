@@ -2,6 +2,8 @@ import time
 from collections.abc import Callable
 
 from api import FloodWaitError, TelegramAPI
+from message_queue import MessageQueue
+from models import Message
 
 
 class Bot:
@@ -10,14 +12,22 @@ class Bot:
         on_rate_limit: Callable[[FloodWaitError, int], None] | None = None,
     ):
         self.api = TelegramAPI()
+        self.queue = MessageQueue()
         self.limits_hit = 0
         self.on_rate_limit = on_rate_limit
 
-    def send_message(self, chat_id: int) -> None:
-        while True:
+    def enqueue(self, message: Message) -> None:
+        self.queue.add(message)
+
+    def process_queue(self) -> None:
+        messages_to_process = len(self.queue)
+
+        for _ in range(messages_to_process):
+            message = self.queue.get()
+
             try:
-                self.api.process_message(chat_id)
-                return
+                self.api.process_message(message.chat_id)
+                message.sent_at = time.monotonic()
 
             except FloodWaitError as error:
                 self.limits_hit += 1
@@ -25,4 +35,4 @@ class Bot:
                 if self.on_rate_limit is not None:
                     self.on_rate_limit(error, self.limits_hit)
 
-                time.sleep(error.seconds)
+                self.queue.add(message)

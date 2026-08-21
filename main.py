@@ -1,9 +1,9 @@
 from rich import print
 from rich.panel import Panel
 
+from analyze import analyze
 from bot import Bot
 from render import Renderer
-from analyze import analyze
 from simulator import MessageSimulator
 
 

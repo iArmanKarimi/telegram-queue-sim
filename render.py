@@ -12,7 +12,7 @@ class Renderer:
     def __init__(self, message_count: int):
         self.progress = Progress()
         self.progress_task = self.progress.add_task(
-            f"[cyan]Sending {message_count} messages...[/cyan]",
+            "[cyan]Sending messages...",
             total=message_count,
         )
 
@@ -46,7 +46,7 @@ class Renderer:
         error: FloodWaitError,
         limit_count: int,
     ) -> None:
-        self.status = Panel.fit(
+        self.status = Panel(
             f"[bold purple]Rate limit hit: {limit_count}[/bold purple]",
             border_style="purple",
         )
@@ -70,7 +70,7 @@ class Renderer:
         print(
             Panel(
                 f"[bold cyan]Simulation Complete[/bold cyan]\n\n"
-                f"Messages sent: {len(messages)}\n"
+                f"Messages sent: {len(wait_times)}\n"
                 f"Limits hit: {limits_hit}\n"
                 f"Total wait time: {total_wait_time:.2f}s\n"
                 f"Average wait time: {average_wait_time:.2f}s",

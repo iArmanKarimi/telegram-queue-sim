@@ -5,6 +5,7 @@ from collections.abc import Callable
 from bot import Bot
 from models import Message
 
+
 CHAT_COUNT = 10
 MIN_SEND_INTERVAL = 0.01
 MAX_SEND_INTERVAL = 0.03
@@ -27,12 +28,15 @@ class MessageSimulator:
         for message_index in range(message_count):
             message = self._create_message(message_index)
 
-            self.bot.send_message(message.chat_id)
-            message.sent_at = time.monotonic()
+            self.bot.enqueue(message)
+            self.bot.process_queue()
 
             self.messages.append(message)
 
-            if self.on_message_sent is not None:
+            if (
+                message.sent_at is not None
+                and self.on_message_sent is not None
+            ):
                 self.on_message_sent()
 
             self._simulate_arrival_interval()
