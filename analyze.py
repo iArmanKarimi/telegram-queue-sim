@@ -1,10 +1,15 @@
+import shutil
+
 import plotext as plt
 
 from models import Message
 
 
-CHART_WIDTH = 100
-CHART_HEIGHT = 25
+def _chart_size() -> tuple[int, int]:
+    terminal = shutil.get_terminal_size((100, 30))
+    width = max(48, min(100, terminal.columns - 4))
+    height = max(12, min(22, terminal.lines - 8))
+    return width, height
 
 
 def _prepare_chart(
@@ -14,7 +19,8 @@ def _prepare_chart(
 ) -> None:
     plt.clear_figure()
     plt.theme("pro")
-    plt.plotsize(CHART_WIDTH, CHART_HEIGHT)
+    width, height = _chart_size()
+    plt.plotsize(width, height)
 
     plt.title(title)
     plt.xlabel(x_label)
@@ -48,6 +54,7 @@ def plot_wait_times(messages: list[Message]) -> None:
     )
 
     plt.scatter(message_indices, wait_times)
+    plt.xfrequency(max(1, len(message_indices) // 8))
     plt.show()
 
 
@@ -79,6 +86,7 @@ def plot_average_wait_by_chat(messages: list[Message]) -> None:
     )
 
     plt.bar(chat_ids, average_waits)
+    plt.xfrequency(1)
     plt.show()
 
 
@@ -113,6 +121,7 @@ def plot_message_timeline(messages: list[Message]) -> None:
             marker="dot",
         )
 
+    plt.yfrequency(max(1, len(sent_messages) // 8))
     plt.show()
 
 
@@ -162,8 +171,10 @@ def print_summary(messages: list[Message]) -> None:
 def analyze(
     messages: list[Message],
     show_plots: bool = True,
+    show_summary: bool = True,
 ) -> None:
-    print_summary(messages)
+    if show_summary:
+        print_summary(messages)
 
     if not show_plots:
         return

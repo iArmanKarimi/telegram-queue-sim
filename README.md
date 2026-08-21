@@ -75,6 +75,21 @@ automation:
 python main.py --messages 10 --no-plots
 ```
 
+To compare the queue-aware scheduler with a naive blocking sender, add
+`--naive`:
+
+```bash
+python main.py --messages 50 --naive --no-plots
+```
+
+The default queue-aware mode tracks global and per-chat availability and
+selects another ready chat when one chat is throttled. Naive mode sends in
+FIFO order and sleeps on a `FloodWaitError`, so one limited chat blocks every
+message behind it. Compare the `Rate limits hit`, `Average wait time`, and
+`Throughput` values in the broadcast reports. Because arrivals and chat
+assignments are random, use larger runs or repeat each mode when comparing
+results.
+
 The complete option list is available with:
 
 ```bash
